@@ -95,4 +95,51 @@ export class Serializer {
   deserialize<T>(raw: any): T {
     throw new Error('not implemented');
   }
+
+  deserialize<T>(value: any): T {
+    if (value === undefined) {
+      return undefined as never;
+    }
+
+    if (value === null) {
+      return null as never;
+    }
+
+    const _type = typeof value;
+
+    if (_type === 'number' || _type === 'string' || _type === 'boolean') {
+      return value;
+    }
+
+    if (_type !== 'object') {
+      throw new Error(`unable to deserialize ${value}`);
+    }
+
+    if (value instanceof Array) {
+      return value.map((v) => this.deserialize(v), value) as never;
+    }
+
+    if (value instanceof Object) {
+      const data: Record<string, unknown> = {};
+      const __t: Record<string, unknown> = value['__t'] || {};
+
+      Object.keys(value)
+        .filter((key) => key !== '__t')
+        .map((key) => {
+          const type = Object.values(this.types).find(
+            ({ type }) => type.name === __t[key]
+          );
+
+          if (type) {
+            data[key] = type.deserialize(value[key]);
+          } else {
+            data[key] = this.deserialize(value[key]);
+          }
+        });
+
+      return data as never;
+    }
+
+    throw new Error(`unable to deserialize ${value}`);
+  }
 }
