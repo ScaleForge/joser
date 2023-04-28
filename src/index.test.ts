@@ -1,7 +1,7 @@
 import { Serializer } from '.';
 
 describe('Serializer', () => {
-  describe('serial data', () => {
+  describe('serialize data', () => {
     const cases = [
       [1, 1],
       ['string', 'string'],
