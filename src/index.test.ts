@@ -32,9 +32,7 @@ describe('Serializer', () => {
     ] as [unknown, unknown][];
 
     test.each(cases)('serialize %p', (input, output) => {
-      const outputData = new Serializer().serialize(input);
-
-      expect(outputData).toEqual(output);
+      expect(new Serializer().serialize(input)).toEqual(output);
     });
   });
 });
