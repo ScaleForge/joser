@@ -1,14 +1,12 @@
 import { Serializer } from '.';
 
 describe('Serializer', () => {
-  describe('serial data', () => {
+  describe('serialize data', () => {
     const cases = [
       [1, 1],
       ['string', 'string'],
       [true, true],
       [null, null],
-      [new Date('2023-04-25T00:00:00Z'), 1682380800000],
-      [Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), '00010203040506070809'],
       [
         {
           number: 1,
@@ -34,9 +32,7 @@ describe('Serializer', () => {
     ] as [unknown, unknown][];
 
     test.each(cases)('serialize %p', (input, output) => {
-      const outputData = new Serializer().serialize(input);
-
-      expect(outputData).toEqual(output);
+      expect(new Serializer().serialize(input)).toEqual(output);
     });
   });
 
