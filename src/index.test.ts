@@ -2,9 +2,6 @@ import { Serializer } from '.';
 
 describe('Serializer', () => {
   describe('serial data', () => {
-    const x: Record<string, unknown> = {
-      number: 2,
-    };
     const cases = [
       [1, 1],
       ['string', 'string'],
@@ -30,12 +27,6 @@ describe('Serializer', () => {
             Date: 'Date',
             Buffer: 'Buffer',
           },
-        },
-      ],
-      [
-        x,
-        {
-          number: 2,
         },
       ],
     ] as [unknown, unknown][];

@@ -62,7 +62,7 @@ export class Serializer {
       return value.map((v) => this.serialize(v), value);
     }
 
-    if (value.constructor === Object) {
+    if (value instanceof Object) {
       const data: Record<string, unknown> = {};
       const __t: Record<string, unknown> = {};
 
