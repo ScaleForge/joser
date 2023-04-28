@@ -1,5 +1,3 @@
-import R from 'ramda';
-
 export type SerializerType<TValue = any, TRaw = any> = {
   type: Function;
   serialize: (value: TValue) => TRaw;
@@ -41,12 +39,6 @@ export class Serializer {
     );
   }
 
-  private getType(value: any) {
-    return R.find(
-      ({ type }) => value instanceof type,
-      [...BUILT_IN_TYPES, ...R.values(this.types)]
-    );
-  }
   serialize(value: any): any {
     if (value === undefined) {
       return undefined;
@@ -62,37 +54,41 @@ export class Serializer {
       return value;
     }
 
-    if (value instanceof Array) {
-      return R.map((v) => this.serialize(v), value);
+    if (_type !== 'object') {
+      throw new Error(`unable to serialize ${value}`);
     }
 
-    const type = this.getType(value);
+    if (value instanceof Array) {
+      return value.map((v) => this.serialize(v), value);
+    }
 
-    if (!type) {
+    if (value.constructor === Object) {
       const data: Record<string, unknown> = {};
       const __t: Record<string, unknown> = {};
-      for (const [key, val] of R.toPairs(value)) {
-        data[key] = this.serialize(val);
 
-        const type = this.getType(val);
+      Object.keys(value).map((key) => {
+        const type = Object.values(this.types).find(
+          ({ type }) => value[key] instanceof type
+        );
 
         if (type) {
+          data[key] = type.serialize(value[key]);
           __t[key] = type.type.name;
+        } else {
+          data[key] = this.serialize(value[key]);
         }
-      }
+      });
 
-      return {
-        ...data,
-        __t: {
-          ...__t,
-        },
-      };
+      return Object.assign(
+        data,
+        Object.keys(__t).length > 0
+          ? {
+              __t,
+            }
+          : {}
+      );
     }
 
-    return type.serialize(value as never);
-  }
-
-  deserialize<T>(raw: any): T {
-    throw new Error('not implemented');
+    throw new Error(`unable to serialize ${value}`);
   }
 }

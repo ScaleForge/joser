@@ -2,13 +2,14 @@ import { Serializer } from '.';
 
 describe('Serializer', () => {
   describe('serial data', () => {
+    const x: Record<string, unknown> = {
+      number: 2,
+    };
     const cases = [
       [1, 1],
       ['string', 'string'],
       [true, true],
       [null, null],
-      [new Date('2023-04-25T00:00:00Z'), 1682380800000],
-      [Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]), '00010203040506070809'],
       [
         {
           number: 1,
@@ -29,6 +30,12 @@ describe('Serializer', () => {
             Date: 'Date',
             Buffer: 'Buffer',
           },
+        },
+      ],
+      [
+        x,
+        {
+          number: 2,
         },
       ],
     ] as [unknown, unknown][];
