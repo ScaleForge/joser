@@ -1,5 +1,3 @@
-import R from 'ramda';
-
 export type SerializerType<TValue = any, TRaw = any> = {
   type: Function;
   serialize: (value: TValue) => TRaw;
@@ -41,12 +39,6 @@ export class Serializer {
     );
   }
 
-  private getType(value: any) {
-    return R.find(
-      ({ type }) => value instanceof type,
-      [...BUILT_IN_TYPES, ...R.values(this.types)]
-    );
-  }
   serialize(value: any): any {
     if (value === undefined) {
       return undefined;
@@ -62,68 +54,72 @@ export class Serializer {
       return value;
     }
 
-    if (value instanceof Array) {
-      return R.map((v) => this.serialize(v), value);
+    if (_type !== 'object') {
+      throw new Error(`unable to serialize ${value}`);
     }
 
-    const type = this.getType(value);
+    if (value instanceof Array) {
+      return value.map((v) => this.serialize(v), value);
+    }
 
-    if (!type) {
+    if (value.constructor === Object) {
       const data: Record<string, unknown> = {};
       const __t: Record<string, unknown> = {};
-      for (const [key, val] of R.toPairs(value)) {
-        data[key] = this.serialize(val);
 
-        const type = this.getType(val);
+      Object.keys(value).map((key) => {
+        const type = Object.values(this.types).find(
+          ({ type }) => value[key] instanceof type
+        );
 
         if (type) {
+          data[key] = type.serialize(value[key]);
           __t[key] = type.type.name;
+        } else {
+          data[key] = this.serialize(value[key]);
         }
-      }
+      });
 
-      return {
-        ...data,
-        __t: {
-          ...__t,
-        },
-      };
+      return Object.assign(
+        data,
+        Object.keys(__t).length > 0
+          ? {
+              __t,
+            }
+          : {}
+      );
     }
 
-    return type.serialize(value as never);
+    throw new Error(`unable to serialize ${value}`);
   }
 
   deserialize<T>(raw: any): T {
-    throw new Error('not implemented');
-  }
-
-  deserialize<T>(value: any): T {
-    if (value === undefined) {
+    if (raw === undefined) {
       return undefined as never;
     }
 
-    if (value === null) {
+    if (raw === null) {
       return null as never;
     }
 
-    const _type = typeof value;
+    const _type = typeof raw;
 
     if (_type === 'number' || _type === 'string' || _type === 'boolean') {
-      return value;
+      return raw;
     }
 
     if (_type !== 'object') {
-      throw new Error(`unable to deserialize ${value}`);
+      throw new Error(`unable to deserialize ${raw}`);
     }
 
-    if (value instanceof Array) {
-      return value.map((v) => this.deserialize(v), value) as never;
+    if (raw instanceof Array) {
+      return raw.map((v) => this.deserialize(v), raw) as never;
     }
 
-    if (value instanceof Object) {
+    if (raw instanceof Object) {
       const data: Record<string, unknown> = {};
-      const __t: Record<string, unknown> = value['__t'] || {};
+      const __t: Record<string, unknown> = raw['__t'] || {};
 
-      Object.keys(value)
+      Object.keys(raw)
         .filter((key) => key !== '__t')
         .map((key) => {
           const type = Object.values(this.types).find(
@@ -131,15 +127,15 @@ export class Serializer {
           );
 
           if (type) {
-            data[key] = type.deserialize(value[key]);
+            data[key] = type.deserialize(raw[key]);
           } else {
-            data[key] = this.deserialize(value[key]);
+            data[key] = this.deserialize(raw[key]);
           }
         });
 
       return data as never;
     }
 
-    throw new Error(`unable to deserialize ${value}`);
+    throw new Error(`unable to deserialize ${raw}`);
   }
 }
