@@ -1,4 +1,5 @@
-export type SerializerType<TValue = any, TRaw = any> = {
+/* eslint-disable @typescript-eslint/ban-types */
+export type SerializerType<TValue = unknown, TRaw = unknown> = {
   type: Function;
   serialize: (value: TValue) => TRaw;
   deserialize: (raw: TRaw) => TValue;
@@ -39,7 +40,7 @@ export class Serializer {
     );
   }
 
-  serialize(value: any): any {
+  serialize(value: unknown): unknown {
     if (value === undefined) {
       return undefined;
     }
@@ -62,37 +63,32 @@ export class Serializer {
       return value.map((v) => this.serialize(v), value);
     }
 
-    if (value.constructor === Object) {
-      const data: Record<string, unknown> = {};
-      const __t: Record<string, unknown> = {};
+    const obj: Record<string, unknown> = {};
 
-      Object.keys(value).map((key) => {
-        const type = Object.values(this.types).find(
-          ({ type }) => value[key] instanceof type
-        );
-
-        if (type) {
-          data[key] = type.serialize(value[key]);
-          __t[key] = type.type.name;
-        } else {
-          data[key] = this.serialize(value[key]);
-        }
-      });
-
-      return Object.assign(
-        data,
-        Object.keys(__t).length > 0
-          ? {
-              __t,
-            }
-          : {}
+    for (const key of Object.keys(value)) {
+      const type = Object.values(this.types).find(
+        ({ type }) => value[key] instanceof type
       );
+      
+      if (type) {
+        Object.assign(obj, {
+          [key]: type.serialize(value[key]),
+          __t: {
+            ...(obj['__t'] as Record<string, string> || {}),
+            [key]: type.type.name,
+          },
+        });
+
+        continue;
+      }
+
+      obj[key] = this.serialize(value[key]);
     }
 
-    throw new Error(`unable to serialize ${value}`);
+    return obj;
   }
 
-  deserialize<T>(raw: any): T {
+  deserialize<T = unknown>(raw: unknown): T {
     if (raw === undefined) {
       return undefined as never;
     }
@@ -104,7 +100,7 @@ export class Serializer {
     const _type = typeof raw;
 
     if (_type === 'number' || _type === 'string' || _type === 'boolean') {
-      return raw;
+      return raw as never;
     }
 
     if (_type !== 'object') {
