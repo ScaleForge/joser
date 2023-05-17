@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-types */
-export type SerializerType<TValue = unknown, TRaw = unknown> = {
+export type Serializer<TValue = unknown, TRaw = unknown> = {
   type: Function;
   serialize: (value: TValue) => TRaw;
   deserialize: (raw: TRaw) => TValue;
 };
 
-const BUILT_IN_TYPES: SerializerType[] = [
+const BUILT_IN_SERIALIZERS: Serializer[] = [
   {
     type: Date,
     serialize(value: Date) {
@@ -24,12 +24,21 @@ const BUILT_IN_TYPES: SerializerType[] = [
       return Buffer.from(raw, 'hex');
     },
   },
+  {
+    type: Set,
+    serialize(value: Set<unknown>) {
+      return [...value];
+    },
+    deserialize(raw: unknown[]) {
+      return new Set(raw);
+    },
+  },
 ];
 
-export class Serializer {
-  private types: Record<string, SerializerType>;
-  constructor(opts?: { types?: SerializerType[] }) {
-    this.types = [...BUILT_IN_TYPES, ...(opts?.types || [])].reduce(
+export class Joser {
+  private serializers: Record<string, Serializer>;
+  constructor(opts?: { serializers?: Serializer[] }) {
+    this.serializers = [...BUILT_IN_SERIALIZERS, ...(opts?.serializers || [])].reduce(
       (acc, item) => {
         return {
           ...acc,
@@ -66,7 +75,7 @@ export class Serializer {
     const obj: Record<string, unknown> = {};
 
     for (const key of Object.keys(value)) {
-      const type = Object.values(this.types).find(
+      const type = Object.values(this.serializers).find(
         ({ type }) => value[key] instanceof type
       );
       
@@ -118,7 +127,7 @@ export class Serializer {
       Object.keys(raw)
         .filter((key) => key !== '__t')
         .map((key) => {
-          const type = Object.values(this.types).find(
+          const type = Object.values(this.serializers).find(
             ({ type }) => type.name === __t[key]
           );
 
