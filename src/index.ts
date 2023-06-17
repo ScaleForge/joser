@@ -5,6 +5,10 @@ export type Serializer<TValue = unknown, TRaw = unknown> = {
   deserialize: (raw: TRaw) => TValue;
 };
 
+export type Options = {
+  serializers?: Serializer[];
+};
+
 const BUILT_IN_SERIALIZERS: Serializer[] = [
   {
     type: Date,
@@ -37,7 +41,7 @@ const BUILT_IN_SERIALIZERS: Serializer[] = [
 
 export class Joser {
   private serializers: Record<string, Serializer>;
-  constructor(opts?: { serializers?: Serializer[] }) {
+  constructor(opts?: Options) {
     this.serializers = [...BUILT_IN_SERIALIZERS, ...(opts?.serializers || [])].reduce(
       (acc, item) => {
         return {
