@@ -42,6 +42,15 @@ const BUILT_IN_SERIALIZERS: Serializer[] = [
       return new Set(serialized);
     },
   },
+  {
+    type: Map,
+    serialize(value: Map<string, unknown>) {
+      return [...value.entries()];
+    },
+    deserialize(serialized: [string, unknown][]) {
+      return new Map(serialized);
+    },
+  },
 ];
 
 export class Joser {
