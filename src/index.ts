@@ -84,6 +84,7 @@ export class Joser {
 
     return toPairs(__t.i).reduce((accum, [key, value]: [string[], number]) => {
       const type = __t.t[value];
+
       const serializer = this.serializers[type];
       
       if (!serializer) {
@@ -125,11 +126,12 @@ export class Joser {
           continue;
         }
 
-        if (!t.includes(serializer.type.name)) {
-          t.push(serializer.type.name);
+        const name = serializer.name ?? serializer.type.name;
+        if (!t.includes(name)) {
+          t.push(name);
         }
 
-        i.push([key, t.indexOf(serializer.type.name)]);
+        i.push([key, t.indexOf(name)]);
         o.push([key, serializer.serialize(value)]);
 
         continue;
