@@ -6,6 +6,7 @@ import { toPairs } from './libs/to-pairs';
 /* eslint-disable @typescript-eslint/ban-types */
 export type Serializer<T = unknown, TSerialized = unknown> = {
   type: Function;
+  name?: string;
   serialize: (value: T) => TSerialized;
   deserialize: (serialized: TSerialized) => T;
 };
@@ -17,6 +18,7 @@ export type Options = {
 const BUILT_IN_SERIALIZERS: Serializer[] = [
   {
     type: Date,
+    name: 'Date',
     serialize(value: Date) {
       return value.getTime();
     },
@@ -26,6 +28,7 @@ const BUILT_IN_SERIALIZERS: Serializer[] = [
   },
   {
     type: Buffer,
+    name: 'Buffer',
     serialize(value: Buffer) {
       return value.toString('base64');
     },
@@ -35,6 +38,7 @@ const BUILT_IN_SERIALIZERS: Serializer[] = [
   },
   {
     type: Set,
+    name: 'Set',
     serialize(value: Set<unknown>) {
       return [...value];
     },
@@ -44,6 +48,7 @@ const BUILT_IN_SERIALIZERS: Serializer[] = [
   },
   {
     type: Map,
+    name: 'Map',
     serialize(value: Map<string, unknown>) {
       return [...value.entries()];
     },
@@ -61,7 +66,7 @@ export class Joser {
       (acc, item) => {
         return {
           ...acc,
-          [item.type.name]: item,
+          [item.name ?? item.type.name]: item,
         };
       },
       {}
@@ -78,7 +83,12 @@ export class Joser {
     delete obj['__t'];
 
     return toPairs(__t.i).reduce((accum, [key, value]: [string[], number]) => {
-      const serializer = this.serializers[__t.t[value]];
+      const type = __t.t[value];
+      const serializer = this.serializers[type];
+      
+      if (!serializer) {
+        throw new Error(`serializer does not exist: type=${type}`);
+      }
 
       return set(key, serializer.deserialize(get(key, obj)), accum);
     }, obj);
