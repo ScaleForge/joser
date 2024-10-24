@@ -62,15 +62,15 @@ export class Joser {
   private serializers: Record<string, Serializer>;
 
   constructor(opts?: Options) {
-    this.serializers = [...BUILT_IN_SERIALIZERS, ...(opts?.serializers ?? [])].reduce(
-      (acc, item) => {
-        return {
-          ...acc,
-          [item.name ?? item.type.name]: item,
-        };
-      },
-      {}
-    );
+    this.serializers = [
+      ...BUILT_IN_SERIALIZERS,
+      ...(opts?.serializers ?? []),
+    ].reduce((acc, item) => {
+      return {
+        ...acc,
+        [item.name ?? item.type.name]: item,
+      };
+    }, {});
   }
 
   public deserialize(obj: Record<string, unknown>): Record<string, unknown> {
@@ -82,32 +82,122 @@ export class Joser {
 
     delete obj['__t'];
 
-    return toPairs(__t.i).reduce((accum, [key, value]: [string[], number]) => {
-      const type = __t.t[value];
+    return toPairs(__t.i).reduce(
+      (accum, [key, value]: [string[], number | [number, number][]]) => {
+        if (Array.isArray(value)) {
+          const deserializedArray = (get(key, obj) as unknown[]).map(
+            (item, index) => {
+              const typeIndices = value.find((item) => item.at(0) === index);
 
-      const serializer = this.serializers[type];
-      
-      if (!serializer) {
-        throw new Error(`serializer does not exist: type=${type}`);
-      }
+              if (typeIndices) {
+                const type = __t.t[typeIndices.at(1)];
+                const serializer = this.serializers[type];
 
-      return set(key, serializer.deserialize(get(key, obj)), accum);
-    }, obj);
+                if (Array.isArray(item)) {
+                  const { array } = this.deserialize({
+                    array: item,
+                    __t: {
+                      t: __t.t,
+                      i: { array: typeIndices.at(1) },
+                    },
+                  });
+
+                  return array;
+                }
+
+                if (!serializer) {
+                  throw new Error(`serializer does not exist: type=${type}`);
+                }
+
+                return serializer.deserialize(item);
+              }
+
+              return item;
+            }
+          );
+
+          return set(key, deserializedArray, accum);
+        }
+
+        const type = __t.t[value as number];
+        const serializer = this.serializers[type];
+
+        if (!serializer) {
+          throw new Error(`serializer does not exist: type=${type}`);
+        }
+
+        return set(key, serializer.deserialize(get(key, obj)), accum);
+      },
+      obj
+    );
   }
 
   public serialize(obj: Record<string, unknown>): Record<string, unknown> {
     const serializers = Object.values(this.serializers);
 
     const t: string[] = [];
-    const i: [string[], number][] = [];
+    const i: [string[], number | [number, unknown][]][] = [];
     const o: [string[], unknown][] = [];
 
-    for (const [key, value] of toPairs(obj, [], serializers.map((item) => item.type))) {
+    for (const [key, value] of toPairs(
+      obj,
+      [],
+      serializers.map((item) => item.type)
+    )) {
       const type = typeof value;
+
+      if (Array.isArray(value)) {
+        const _i: [number, unknown][] = [];
+
+        const serializedArray = value.map((item, index) => {
+          const serializer = Object.values(this.serializers).find(
+            (serializer) => item instanceof serializer.type
+          );
+
+          if (Array.isArray(item)) {
+            const __i: [number, unknown][] = [];
+
+            const { array, __t } = this.serialize({ array: item });
+
+            for (const name of __t['t']) {
+              if (!t.includes(name)) {
+                t.push(name);
+              }
+            }
+
+            for (const i of __t['i'].array) {
+              const type = t.indexOf(__t['t'][i.at(1)]);
+              __i.push([i.at(0), type]);
+            }
+
+            _i.push([index, __i]);
+            return array;
+          }
+
+          if (typeof item === 'object' && item !== null && !serializer) {
+            return this.serialize(item);
+          }
+
+          if (!serializer) {
+            return item;
+          }
+
+          const name = serializer.name ?? serializer.type.name;
+          if (!t.includes(name)) {
+            t.push(name);
+          }
+
+          _i.push([index, t.indexOf(name)]);
+          return serializer.serialize(item);
+        });
+
+        o.push([key, serializedArray]);
+        i.push([key, _i]);
+        continue;
+      }
 
       if (
         value === null ||
-        value instanceof Array ||
         type === 'number' ||
         type === 'string' ||
         type === 'boolean'
@@ -118,7 +208,9 @@ export class Joser {
       }
 
       if (type === 'object') {
-        const serializer = serializers.find((item) => value instanceof item.type);
+        const serializer = serializers.find(
+          (item) => value instanceof item.type
+        );
 
         if (!serializer) {
           o.push([key, value]);
