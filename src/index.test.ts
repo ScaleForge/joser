@@ -99,6 +99,65 @@ describe('Joser', () => {
     ],
     [
       {
+        Array: [
+          {
+            Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Date: new Date('2023-04-25T00:00:00Z'),
+            string: 'string',
+            boolean: true,
+            null: null,
+          },
+          {
+            Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Date: new Date('2023-04-25T00:00:00Z'),
+            string: 'string',
+            boolean: true,
+            null: null,
+          },
+          Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+          new Date('2023-04-25T00:00:00Z'),
+          null,
+          true,
+          'string',
+        ],
+      },
+      {
+        Array: [
+          {
+            Buffer: 'AAECAwQFBgcICQ==',
+            Date: 1682380800000,
+            string: 'string',
+            boolean: true,
+            null: null,
+          },
+          {
+            Buffer: 'AAECAwQFBgcICQ==',
+            Date: 1682380800000,
+            string: 'string',
+            boolean: true,
+            null: null,
+          },
+          'AAECAwQFBgcICQ==',
+          1682380800000,
+          null,
+          true,
+          'string',
+        ],
+        __t: {
+          t: ['Buffer', 'Date'],
+          i: {
+            Array: [
+              [0, { Buffer: 0, Date: 1 }],
+              [1, { Buffer: 0, Date: 1 }],
+              [2, 0],
+              [3, 1],
+            ],
+          },
+        },
+      },
+    ],
+    [
+      {
         number: 1,
         string: 'string',
         boolean: true,
