@@ -93,16 +93,19 @@ export class Joser {
                 const type = __t.t[typeIndices.at(1)];
                 const serializer = this.serializers[type];
 
-                if (Array.isArray(item)) {
-                  const { array } = this.deserialize({
-                    array: item,
+                if (
+                  Array.isArray(item) ||
+                  (typeof item === 'object' && item !== null && !serializer)
+                ) {
+                  const { deserialize } = this.deserialize({
+                    deserialize: item,
                     __t: {
                       t: __t.t,
-                      i: { array: typeIndices.at(1) },
+                      i: { deserialize: typeIndices.at(1) },
                     },
                   });
 
-                  return array;
+                  return deserialize;
                 }
 
                 if (!serializer) {
@@ -175,7 +178,18 @@ export class Joser {
           }
 
           if (typeof item === 'object' && item !== null && !serializer) {
-            return this.serialize(item);
+            const serialized = this.serialize(item);
+
+            for (const name of serialized['__t']['t']) {
+              if (!t.includes(name)) {
+                t.push(name);
+              }
+            }
+
+            _i.push([index, serialized['__t']['i']]);
+            delete serialized['__t'];
+
+            return serialized;
           }
 
           if (!serializer) {
