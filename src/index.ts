@@ -187,6 +187,18 @@ export class Joser {
             }
 
             if (serialized?.['__t']?.['i']) {
+              for (const [key, value] of Object.entries(
+                serialized['__t']['i']
+              )) {
+                const type = t.indexOf(serialized?.['__t']?.['t']?.[value]);
+
+                if (type >= 0) {
+                  serialized['__t']['i'][key] = type;
+                  continue;
+                }
+
+                serialized['__t']['i'][key] = value;
+              }
               _i.push([index, serialized['__t']['i']]);
             }
 
