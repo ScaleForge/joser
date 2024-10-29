@@ -1,4 +1,8 @@
-export function toPairs(obj: Record<string, unknown>, key?: string[], types?: unknown[]): [string[], unknown][] {
+export function toPairs(
+  obj: Record<string, unknown>,
+  key?: string[],
+  types?: unknown[]
+): [string[], unknown][] {
   return Object.getOwnPropertyNames(obj).reduce((accum, k) => {
     const value = obj[k];
 
@@ -10,15 +14,20 @@ export function toPairs(obj: Record<string, unknown>, key?: string[], types?: un
 
     if (
       value === null ||
-      value instanceof Array ||
+      Array.isArray(value) ||
       type === 'number' ||
       type === 'string' ||
       type === 'boolean' ||
-      (type === 'object' && types && types.find((t: never) => value instanceof t))
+      (type === 'object' &&
+        types &&
+        types.find((t: never) => value instanceof t))
     ) {
       return [...accum, [[...(key ?? []), k], value]];
     }
 
-    return [...accum, ...toPairs(value as Record<string, unknown>, [...(key ?? []), k], types)];
+    return [
+      ...accum,
+      ...toPairs(value as Record<string, unknown>, [...(key ?? []), k], types),
+    ];
   }, []);
 }
