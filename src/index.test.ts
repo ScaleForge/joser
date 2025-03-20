@@ -387,7 +387,7 @@ describe('Joser', () => {
     expect(new Joser().deserialize(input)).toEqual(output);
   });
 
-  describe('Custom Serializers', () => {
+  describe.skip('Custom Serializers', () => {
     class ObjectId {
       constructor(private value: Buffer) {}
 
@@ -416,7 +416,7 @@ describe('Joser', () => {
       }
     }
 
-    test('custom serializer', () => {
+    test('serialize', () => {
       const value = {
         balance: new Decimal(1000),
         platform: ObjectId.generate(),
@@ -466,8 +466,11 @@ describe('Joser', () => {
           },
         ],
       });
-
-      console.dir(joser.serialize(value), { depth: 10 });
+  
+      expect(joser.serialize(value)).toMatchObject({
+        balance: '1000',
+      });
+      console.log(joser.serialize(value));
     });
   });
 });

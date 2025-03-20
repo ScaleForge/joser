@@ -1,7 +1,8 @@
-import { fromPairs } from './libs/from-pairs';
+
 import { get } from './libs/get';
 import { set } from './libs/set';
-import { toPairs } from './libs/to-pairs';
+import { toPairs as _toPairs } from './libs/to-pairs-legacy';
+import { fromPairs as _fromPairs } from './libs/from-pairs-legacy';
 
 /* eslint-disable @typescript-eslint/ban-types */
 export type Serializer<T = unknown, TSerialized = unknown> = {
@@ -82,7 +83,7 @@ export class Joser {
 
     delete obj['__t'];
 
-    return toPairs(__t.i).reduce(
+    return _toPairs(__t.i).reduce(
       (accum, [key, value]: [string[], number | [number, number][]]) => {
         if (Array.isArray(value)) {
           const deserializedArray = (get(key, obj) as unknown[]).map(
@@ -142,7 +143,7 @@ export class Joser {
     const i: [string[], number | [number, unknown][]][] = [];
     const o: [string[], unknown][] = [];
 
-    for (const [key, value] of toPairs(
+    for (const [key, value] of _toPairs(
       obj,
       [],
       serializers.map((item) => item.type)
@@ -312,14 +313,14 @@ export class Joser {
     }
 
     if (t.length === 0) {
-      return fromPairs(o);
+      return _fromPairs(o);
     }
 
     return {
-      ...fromPairs(o),
+      ..._fromPairs(o),
       __t: {
         t,
-        i: fromPairs(i),
+        i: _fromPairs(i),
       },
     };
   }

@@ -1,18 +1,35 @@
-export function set(key: string[], value: unknown, obj: Record<string, unknown> = {}) {
+import { Key } from './types';
+
+export function set(key: Key[], value: unknown, obj?: Record<string, unknown> | Array<unknown>) {
   const [first, ...rest] = key;
+  
+  if (typeof first === 'number') {
+    const _obj = obj ?? [];
+
+    const [first, ...rest] = key;
+
+    if (rest.length === 0) {
+      _obj[first] = value;
+
+      return _obj;
+    }
+
+    _obj[first] = set(rest, value, _obj[first] ?? (typeof rest[0] === 'number' ? [] : {}));
+
+    return _obj;
+  }
+
+  const _obj = obj ?? {};
 
   if (rest.length === 0) {
     return {
-      ...obj,
+      ..._obj,
       [first]: value,
     };
   }
 
   return {
     ...obj,
-    [first]: {
-      ...((obj)[first] ?? {}) as Record<string, unknown>,
-      ...set(rest, value, obj[first] as Record<string, unknown>),
-    },
+    [first]: set(rest, value, _obj[first]),
   };
 }
