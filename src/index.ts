@@ -1,8 +1,11 @@
 
 import { get } from './libs/get';
-import { set } from './libs/set';
+import { set as _set } from './libs/set-legacy';
 import { toPairs as _toPairs } from './libs/to-pairs-legacy';
-import { fromPairs as _fromPairs } from './libs/from-pairs-legacy';
+import { toPairs } from './libs/to-pairs';
+import { Key } from './libs/types';
+import { fromPairs } from './libs/from-pairs';
+import { set } from './libs/set';
 
 /* eslint-disable @typescript-eslint/ban-types */
 export type Serializer<T = unknown, TSerialized = unknown> = {
@@ -74,7 +77,33 @@ export class Joser {
     }, {});
   }
 
-  public deserialize(obj: Record<string, unknown>): Record<string, unknown> {
+  public deserialize(obj: Record<string, unknown>) {
+    const __t = obj['__t'] as { t: string[]; i: Record<string, unknown>, v?: 1 };
+
+    if (!__t) {
+      return obj;
+    }
+
+    if (__t.v !== 1) {
+      return this._deserialize(obj);
+    }
+
+    delete obj['__t'];
+
+    return toPairs(__t.i).reduce((accum, [key, value]: [string[], number]) => {
+      const type = __t.t[value];
+
+      const serializer = this.serializers[type];
+      
+      if (!serializer) {
+        throw new Error(`serializer does not exist: type=${type}`);
+      }
+
+      return set(key, serializer.deserialize(get(key, obj)), accum);
+    }, obj);
+  }
+
+  public _deserialize(obj: Record<string, unknown>): Record<string, unknown> {
     const __t = obj['__t'] as { t: string[]; i: Record<string, unknown> };
 
     if (!__t) {
@@ -98,7 +127,7 @@ export class Joser {
                   Array.isArray(item) ||
                   (typeof item === 'object' && item !== null && !serializer)
                 ) {
-                  const { deserialize } = this.deserialize({
+                  const { deserialize } = this._deserialize({
                     deserialize: item,
                     __t: {
                       t: __t.t,
@@ -120,7 +149,7 @@ export class Joser {
             }
           );
 
-          return set(key, deserializedArray, accum);
+          return _set(key, deserializedArray, accum);
         }
 
         const type = __t?.t[value as number];
@@ -130,7 +159,7 @@ export class Joser {
           throw new Error(`serializer does not exist: type=${type}`);
         }
 
-        return set(key, serializer.deserialize(get(key, obj)), accum);
+        return _set(key, serializer.deserialize(get(key, obj)), accum);
       },
       obj
     );
@@ -140,141 +169,15 @@ export class Joser {
     const serializers = Object.values(this.serializers);
 
     const t: string[] = [];
-    const i: [string[], number | [number, unknown][]][] = [];
-    const o: [string[], unknown][] = [];
+    const i: [Key[], number | [number, unknown][]][] = [];
+    const o: [Key[], unknown][] = [];
 
-    for (const [key, value] of _toPairs(
+    for (const [key, value] of toPairs(
       obj,
       [],
       serializers.map((item) => item.type)
     )) {
       const type = typeof value;
-
-      if (Array.isArray(value)) {
-        const _i: [number, unknown][] = [];
-
-        const serializedArray = value.map((item, index) => {
-          const serializer = Object.values(this.serializers).find(
-            (serializer) => item instanceof serializer.type
-          );
-
-          if (Array.isArray(item)) {
-            const __i: [number, unknown][] = [];
-
-            const { array, __t } = this.serialize({ array: item });
-
-            for (const name of __t?.['t'] ?? []) {
-              if (!t.includes(name)) {
-                t.push(name);
-              }
-            }
-
-            for (const i of __t?.['i']?.array ?? []) {
-              const type = t.indexOf(__t['t'][i.at(1)]);
-              __i.push([i.at(0), type]);
-            }
-
-            _i.push([index, __i]);
-            return array;
-          }
-
-          if (typeof item === 'object' && item !== null && !serializer) {
-            const { object, __t } = this.serialize({ object: item });
-
-            for (const name of __t?.['t'] ?? []) {
-              if (!t.includes(name)) {
-                t.push(name);
-              }
-            }
-
-            if (__t?.['i']?.object) {
-              __t['i'] = __t['i']['object'];
-              delete __t['i']['object'];
-
-              for (const [key, value] of Object.entries(__t['i']) ?? []) {
-                const type = t.indexOf(__t?.['t']?.[value]);
-
-                if (type >= 0) {
-                  __t['i'][key] = type;
-                  continue;
-                }
-
-                if (typeof value === 'object') {
-                  for (const [_key, _value] of Object.entries(value) ?? []) {
-                    const type = t.indexOf(__t?.['t']?.[_value]);
-
-                    if (type >= 0) {
-                      __t['i'][key][_key] = type;
-                      continue;
-                    }
-
-                    if (Array.isArray(_value)) {
-                      const array = _value.map(([index, item]) => {
-                        const type = t.indexOf(__t?.['t']?.[item]);
-
-                        if (type >= 0) {
-                          return [index, type];
-                        }
-
-                        if (typeof item === 'object') {
-                          const obj = {};
-
-                          for (const [key, value] of Object.entries(item) ??
-                            []) {
-                            const type = t.indexOf(__t?.['t']?.[value]);
-
-                            if (type >= 0) {
-                              Object.assign(obj, { [key]: type });
-                              continue;
-                            }
-
-                            Object.assign(obj, { [key]: value });
-                          }
-
-                          return [index, obj];
-                        }
-
-                        return [index, item];
-                      });
-
-                      __t['i'][key][_key] = array;
-                      continue;
-                    }
-
-                    __t['i'][key][_key] = _value;
-                  }
-                  continue;
-                }
-
-                __t['i'][key] = value;
-              }
-              _i.push([index, __t['i']]);
-            }
-
-            if (__t?.['i']?.object) {
-              delete __t['i']['object'];
-            }
-
-            return object;
-          }
-
-          if (!serializer) {
-            return item;
-          }
-
-          const name = serializer.name ?? serializer.type.name;
-          if (!t.includes(name)) {
-            t.push(name);
-          }
-
-          _i.push([index, t.indexOf(name)]);
-          return serializer.serialize(item);
-        });
-
-        o.push([key, serializedArray]);
-        i.push([key, _i]);
-        continue;
-      }
 
       if (
         value === null ||
@@ -313,14 +216,15 @@ export class Joser {
     }
 
     if (t.length === 0) {
-      return _fromPairs(o);
+      return <never>fromPairs(o);
     }
 
     return {
-      ..._fromPairs(o),
+      ...fromPairs(o),
       __t: {
         t,
-        i: _fromPairs(i),
+        i: fromPairs(i),
+        v: 1,
       },
     };
   }

@@ -28,6 +28,7 @@ describe('Joser', () => {
           i: {
             Date: 0,
           },
+          v: 1,
         },
       },
     ],
@@ -51,6 +52,7 @@ describe('Joser', () => {
               Date: 0,
             },
           },
+          v: 1,
         },
       },
     ],
@@ -84,17 +86,21 @@ describe('Joser', () => {
           t: ['Buffer', 'Date'],
           i: {
             Array: [
-              [0, 0],
-              [1, 1],
+              0,
+              1,
+              undefined,
+              undefined,
+              undefined,
               [
-                5,
-                [
-                  [3, 0],
-                  [4, 1],
-                ],
+                undefined,
+                undefined,
+                undefined,
+                0,
+                1,
               ],
             ],
           },
+          v: 1,
         },
       },
     ],
@@ -148,12 +154,13 @@ describe('Joser', () => {
           t: ['Buffer', 'Date'],
           i: {
             Array: [
-              [0, { Buffer: 0, Date: 1 }],
-              [1, { Buffer: 0, Date: 1 }],
-              [2, 0],
-              [3, 1],
+              { Buffer: 0, Date: 1 },
+              { Buffer: 0, Date: 1 },
+              0,
+              1,
             ],
           },
+          v: 1,
         },
       },
     ],
@@ -241,8 +248,8 @@ describe('Joser', () => {
             Date: 0,
             Buffer: 1,
             Array: [
-              [0, 1],
-              [1, 0],
+              1,
+              0,
             ],
             Object: {
               Date: 0,
@@ -251,19 +258,22 @@ describe('Joser', () => {
                 Date: 0,
                 Buffer: 1,
                 Array: [
-                  [2, 1],
-                  [3, 0],
+                  undefined,
+                  undefined,
+                  1,
+                  0,
+                  undefined,
                   [
-                    5,
-                    [
-                      [2, 1],
-                      [3, 0],
-                    ],
+                    undefined,
+                    undefined,
+                    1,
+                    0,
                   ],
                 ],
               },
             },
           },
+          v: 1,
         },
       },
     ],
@@ -293,6 +303,7 @@ describe('Joser', () => {
             Object: {
               Date: new Date('2023-04-25T00:00:00Z'),
               Array: [],
+              Object: {},
             },
             Date: new Date('2023-04-25T00:00:00Z'),
             Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
@@ -324,6 +335,7 @@ describe('Joser', () => {
             Object: {
               Date: 1682380800000,
               Array: [],
+              Object: {},
             },
             Date: 1682380800000,
             Buffer: 'AAECAwQFBgcICQ==',
@@ -335,45 +347,33 @@ describe('Joser', () => {
             Date: 0,
             Buffer: 1,
             Array: [
-              [
-                0,
-                {
-                  Buffer: 1,
+              {
+                Buffer: 1,
+                Date: 0,
+                Object: {
                   Date: 0,
-                  Object: {
-                    Date: 0,
-                    Array: [
-                      [
-                        0,
-                        {
-                          Buffer: 1,
-                          Date: 0,
-                        },
-                      ],
-                      [
-                        1,
-                        {
-                          Buffer: 1,
-                          Date: 0,
-                        },
-                      ],
-                    ],
-                  },
+                  Array: [
+                    {
+                      Buffer: 1,
+                      Date: 0,
+                    },
+                    {
+                      Buffer: 1,
+                      Date: 0,
+                    },
+                  ],
                 },
-              ],
-              [
-                1,
-                {
-                  Buffer: 1,
+              },
+              {
+                Buffer: 1,
+                Date: 0,
+                Object: {
                   Date: 0,
-                  Object: {
-                    Date: 0,
-                    Array: [],
-                  },
                 },
-              ],
+              },
             ],
           },
+          v: 1,
         },
       },
     ],
@@ -387,7 +387,7 @@ describe('Joser', () => {
     expect(new Joser().deserialize(input)).toEqual(output);
   });
 
-  describe.skip('Custom Serializers', () => {
+  describe('Custom Serializers', () => {
     class ObjectId {
       constructor(private value: Buffer) {}
 
@@ -466,11 +466,16 @@ describe('Joser', () => {
           },
         ],
       });
-  
-      expect(joser.serialize(value)).toMatchObject({
-        balance: '1000',
-      });
-      console.log(joser.serialize(value));
+
+      const result = joser.deserialize(joser.serialize(value));
+
+      expect(result.balance).toBeInstanceOf(Decimal);
+      expect(result.platform).toBeInstanceOf(ObjectId);
+      expect(result.account).toBeInstanceOf(ObjectId);
+      expect(result.gameRounds[0].id).toBeInstanceOf(ObjectId);
+      expect(result.gameRounds[0].bet.balance).toBeInstanceOf(Decimal);
+      expect(result.gameRounds[0].bet.bonuses[0].id).toBeInstanceOf(ObjectId);
+      expect(result.gameRounds[0].bet.bonuses[0].amount).toBeInstanceOf(Decimal);
     });
   });
 });

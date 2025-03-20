@@ -51,6 +51,11 @@ export function toPairs(
     if (isPrimitiveOrInstance(value, types)) {
       accum.push([_key, value]);
     } else if (typeof value === 'object') {
+      if (Array.isArray(value) && value.length === 0 || Object.keys(value).length === 0) {
+        accum.push([_key, value]);
+        return accum;
+      }
+
       accum.push(...toPairs(value as Record<string, unknown>, _key, types));
     }
 
