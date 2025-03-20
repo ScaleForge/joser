@@ -267,6 +267,116 @@ describe('Joser', () => {
         },
       },
     ],
+    [
+      {
+        Date: new Date('2023-04-25T00:00:00Z'),
+        Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        Array: [
+          {
+            Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+            Date: new Date('2023-04-25T00:00:00Z'),
+            Object: {
+              Date: new Date('2023-04-25T00:00:00Z'),
+              Array: [
+                {
+                  Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+                  Date: new Date('2023-04-25T00:00:00Z'),
+                },
+                {
+                  Date: new Date('2023-04-25T00:00:00Z'),
+                  Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+                },
+              ],
+            },
+          },
+          {
+            Object: {
+              Date: new Date('2023-04-25T00:00:00Z'),
+              Array: [],
+            },
+            Date: new Date('2023-04-25T00:00:00Z'),
+            Buffer: Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+          },
+        ],
+      },
+      {
+        Date: 1682380800000,
+        Buffer: 'AAECAwQFBgcICQ==',
+        Array: [
+          {
+            Buffer: 'AAECAwQFBgcICQ==',
+            Date: 1682380800000,
+            Object: {
+              Date: 1682380800000,
+              Array: [
+                {
+                  Buffer: 'AAECAwQFBgcICQ==',
+                  Date: 1682380800000,
+                },
+                {
+                  Date: 1682380800000,
+                  Buffer: 'AAECAwQFBgcICQ==',
+                },
+              ],
+            },
+          },
+          {
+            Object: {
+              Date: 1682380800000,
+              Array: [],
+            },
+            Date: 1682380800000,
+            Buffer: 'AAECAwQFBgcICQ==',
+          },
+        ],
+        __t: {
+          t: ['Date', 'Buffer'],
+          i: {
+            Date: 0,
+            Buffer: 1,
+            Array: [
+              [
+                0,
+                {
+                  Buffer: 1,
+                  Date: 0,
+                  Object: {
+                    Date: 0,
+                    Array: [
+                      [
+                        0,
+                        {
+                          Buffer: 1,
+                          Date: 0,
+                        },
+                      ],
+                      [
+                        1,
+                        {
+                          Buffer: 1,
+                          Date: 0,
+                        },
+                      ],
+                    ],
+                  },
+                },
+              ],
+              [
+                1,
+                {
+                  Buffer: 1,
+                  Date: 0,
+                  Object: {
+                    Date: 0,
+                    Array: [],
+                  },
+                },
+              ],
+            ],
+          },
+        },
+      },
+    ],
   ] as [never, never][];
 
   test.each(cases)('serialize %p', (obj, expected) => {
@@ -331,7 +441,7 @@ describe('Joser', () => {
           },
         ],
       };
-  
+
       const joser = new Joser({
         serializers: [
           {
@@ -356,7 +466,7 @@ describe('Joser', () => {
           },
         ],
       });
-  
+
       console.dir(joser.serialize(value), { depth: 10 });
     });
   });

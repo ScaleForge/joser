@@ -178,35 +178,83 @@ export class Joser {
           }
 
           if (typeof item === 'object' && item !== null && !serializer) {
-            const serialized = this.serialize(item);
+            const { object, __t } = this.serialize({ object: item });
 
-            for (const name of serialized?.['__t']?.['t'] ?? []) {
+            for (const name of __t?.['t'] ?? []) {
               if (!t.includes(name)) {
                 t.push(name);
               }
             }
 
-            if (serialized?.['__t']?.['i']) {
-              for (const [key, value] of Object.entries(
-                serialized['__t']['i']
-              )) {
-                const type = t.indexOf(serialized?.['__t']?.['t']?.[value]);
+            if (__t?.['i']?.object) {
+              __t['i'] = __t['i']['object'];
+              delete __t['i']['object'];
+
+              for (const [key, value] of Object.entries(__t['i']) ?? []) {
+                const type = t.indexOf(__t?.['t']?.[value]);
 
                 if (type >= 0) {
-                  serialized['__t']['i'][key] = type;
+                  __t['i'][key] = type;
                   continue;
                 }
 
-                serialized['__t']['i'][key] = value;
+                if (typeof value === 'object') {
+                  for (const [_key, _value] of Object.entries(value) ?? []) {
+                    const type = t.indexOf(__t?.['t']?.[_value]);
+
+                    if (type >= 0) {
+                      __t['i'][key][_key] = type;
+                      continue;
+                    }
+
+                    if (Array.isArray(_value)) {
+                      const array = _value.map(([index, item]) => {
+                        const type = t.indexOf(__t?.['t']?.[item]);
+
+                        if (type >= 0) {
+                          return [index, type];
+                        }
+
+                        if (typeof item === 'object') {
+                          const obj = {};
+
+                          for (const [key, value] of Object.entries(item) ??
+                            []) {
+                            const type = t.indexOf(__t?.['t']?.[value]);
+
+                            if (type >= 0) {
+                              Object.assign(obj, { [key]: type });
+                              continue;
+                            }
+
+                            Object.assign(obj, { [key]: value });
+                          }
+
+                          return [index, obj];
+                        }
+
+                        return [index, item];
+                      });
+
+                      __t['i'][key][_key] = array;
+                      continue;
+                    }
+
+                    __t['i'][key][_key] = _value;
+                  }
+                  continue;
+                }
+
+                __t['i'][key] = value;
               }
-              _i.push([index, serialized['__t']['i']]);
+              _i.push([index, __t['i']]);
             }
 
-            if (serialized['__t']) {
-              delete serialized['__t'];
+            if (__t?.['i']?.object) {
+              delete __t['i']['object'];
             }
 
-            return serialized;
+            return object;
           }
 
           if (!serializer) {
