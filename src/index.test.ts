@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import { Joser } from './index';
 
 describe('Joser', () => {
@@ -274,5 +275,89 @@ describe('Joser', () => {
 
   test.each(cases)('deserialize %p', (output, input) => {
     expect(new Joser().deserialize(input)).toEqual(output);
+  });
+
+  describe('Custom Serializers', () => {
+    class ObjectId {
+      constructor(private value: Buffer) {}
+
+      static generate() {
+        return new ObjectId(randomBytes(12));
+      }
+
+      serialize() {
+        return this.value;
+      }
+
+      deserialize(value: Buffer) {
+        this.value = value;
+      }
+    }
+
+    class Decimal {
+      constructor(private value: number) {}
+
+      serialize() {
+        return this.value.toString();
+      }
+
+      deserialize(value: string) {
+        this.value = parseFloat(value);
+      }
+    }
+
+    test('custom serializer', () => {
+      const value = {
+        balance: new Decimal(1000),
+        platform: ObjectId.generate(),
+        account: ObjectId.generate(),
+        gameRounds: [
+          {
+            id: ObjectId.generate(),
+            bet: {
+              balance: new Decimal(100),
+              bonuses: [
+                {
+                  id: ObjectId.generate(),
+                  amount: new Decimal(100),
+                },
+                {
+                  id: ObjectId.generate(),
+                  amount: new Decimal(200),
+                },
+              ],
+            },
+            dateTimeCreated: new Date(),
+          },
+        ],
+      };
+  
+      const joser = new Joser({
+        serializers: [
+          {
+            type: Decimal,
+            name: 'Decimal',
+            serialize(value: Decimal) {
+              return value.serialize();
+            },
+            deserialize(serialized: number) {
+              return new Decimal(serialized);
+            },
+          },
+          {
+            type: ObjectId,
+            name: 'ObjectId',
+            serialize(value: ObjectId) {
+              return value.serialize();
+            },
+            deserialize(serialized: Buffer) {
+              return new ObjectId(serialized);
+            },
+          },
+        ],
+      });
+  
+      console.dir(joser.serialize(value), { depth: 10 });
+    });
   });
 });
