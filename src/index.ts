@@ -7,16 +7,16 @@ import { Key } from './libs/types';
 import { fromPairs } from './libs/from-pairs';
 import { set } from './libs/set';
 
-/* eslint-disable @typescript-eslint/ban-types */
-export type Serializer<T = unknown, TSerialized = unknown> = {
+export type Serializer<TDeserialized = unknown, TSerialized = unknown> = {
+  /* eslint-disable @typescript-eslint/ban-types */
   type: Function;
   name?: string;
-  serialize: (value: T) => TSerialized;
-  deserialize: (serialized: TSerialized) => T;
+  serialize: (value: TDeserialized) => TSerialized;
+  deserialize: (serialized: TSerialized) => TDeserialized;
 };
 
-export type Options = {
-  serializers?: Serializer[];
+export type Options<TSerializer extends Serializer = Serializer> = {
+  serializers?: TSerializer[];
 };
 
 const BUILT_IN_SERIALIZERS: Serializer[] = [
