@@ -7,7 +7,7 @@ import { Key } from './libs/types';
 import { fromPairs } from './libs/from-pairs';
 import { set } from './libs/set';
 
-export type Serializer<TDeserialized = unknown, TSerialized = unknown> = {
+export type Serializer<TDeserialized, TSerialized> = {
   /* eslint-disable @typescript-eslint/ban-types */
   type: Function;
   name?: string;
@@ -15,11 +15,11 @@ export type Serializer<TDeserialized = unknown, TSerialized = unknown> = {
   deserialize: (serialized: TSerialized) => TDeserialized;
 };
 
-export type Options<TSerializer extends Serializer = Serializer> = {
+export type Options<TSerializer> = {
   serializers?: TSerializer[];
 };
 
-const BUILT_IN_SERIALIZERS: Serializer[] = [
+const BUILT_IN_SERIALIZERS = [
   {
     type: Date,
     name: 'Date',
@@ -62,10 +62,10 @@ const BUILT_IN_SERIALIZERS: Serializer[] = [
   },
 ];
 
-export class Joser {
-  private serializers: Record<string, Serializer>;
+export class Joser<TSerializer extends Serializer<unknown, unknown> = Serializer<unknown, unknown>> {
+  private serializers: Record<string, TSerializer>;
 
-  constructor(opts?: Options) {
+  constructor(opts?: Options<TSerializer>) {
     this.serializers = [
       ...BUILT_IN_SERIALIZERS,
       ...(opts?.serializers ?? []),
