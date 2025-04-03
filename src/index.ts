@@ -62,7 +62,8 @@ const BUILT_IN_SERIALIZERS = [
   },
 ];
 
-export class Joser<TSerializer extends Serializer<unknown, unknown> = Serializer<unknown, unknown>> {
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export class Joser<TSerializer extends Serializer<any, any> = Serializer<any, any>> {
   private serializers: Record<string, TSerializer>;
 
   constructor(opts?: Options<TSerializer>) {
