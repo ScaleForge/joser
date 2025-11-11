@@ -92,7 +92,11 @@ export class Joser<TSerializer extends Serializer<any, any> = Serializer<any, an
     delete obj['__t'];
 
     return toPairs(__t.i).reduce((accum, [key, value]: [string[], number]) => {
-      const type = __t.t[value];
+      const type = __t.t[<number>value];
+
+      if (type === undefined) {
+        return accum;
+      }
 
       const serializer = this.serializers[type];
       
@@ -122,6 +126,7 @@ export class Joser<TSerializer extends Serializer<any, any> = Serializer<any, an
 
               if (typeIndices) {
                 const type = __t.t[typeIndices.at(1)];
+
                 const serializer = this.serializers[type];
 
                 if (
@@ -153,7 +158,7 @@ export class Joser<TSerializer extends Serializer<any, any> = Serializer<any, an
           return _set(key, deserializedArray, accum);
         }
 
-        const type = __t?.t[value as number];
+        const type = __t?.t[<number>value];
         const serializer = this.serializers[type];
 
         if (!serializer) {

@@ -9,12 +9,14 @@ describe('Joser', () => {
         string: 'string',
         boolean: true,
         null: null,
+        undefined: undefined,
       },
       {
         number: 1,
         string: 'string',
         boolean: true,
         null: null,
+        undefined: undefined,
       },
     ],
     [
@@ -64,6 +66,7 @@ describe('Joser', () => {
           'string',
           true,
           null,
+          undefined,
           [
             'string',
             true,
@@ -80,6 +83,7 @@ describe('Joser', () => {
           'string',
           true,
           null,
+          undefined,
           ['string', true, null, 'AAECAwQFBgcICQ==', 1682380800000],
         ],
         __t: {
@@ -88,6 +92,7 @@ describe('Joser', () => {
             Array: [
               0,
               1,
+              undefined,
               undefined,
               undefined,
               undefined,
@@ -375,6 +380,45 @@ describe('Joser', () => {
           },
           v: 1,
         },
+      },
+    ],
+    [
+      {
+        object: {
+          array: [
+            {
+              type: 'BONUS'
+            },
+            {
+              type: 'GROSS_GAMING_REVENUE',
+              Date: new Date('2023-04-25T00:00:00Z'),
+              null: null,
+              string: 'string',
+            }
+          ],
+        }
+      },
+      {
+        object: {
+          array: [
+            {
+              type: 'BONUS'
+            },
+            {
+              type: 'GROSS_GAMING_REVENUE',
+              Date: 1682380800000,
+              null: null,
+              string: 'string',
+            }
+          ],
+        },
+        __t: {
+          t: [ 'Date' ],
+          i: {
+            object: { array: [ undefined, { Date: 0 } ] }
+          },
+          v: 1
+        }
       },
     ],
   ] as [never, never][];
